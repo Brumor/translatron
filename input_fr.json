@@ -1,0 +1,7 @@
+{
+  "hello": "Bonjour",
+  "helloWorld": "Bonjour tout le monde",
+  "helloUserName": "Bonjour {name}",
+  "helloUserNameAge": "Bonjour {name}, vous avez {age} ans",
+  "helloUsers": "Bonjour {count, plural, =0 {pas d'utilisateurs} =1 {un utilisateur} other {# utilisateurs}}"
+}
