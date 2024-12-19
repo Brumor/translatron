@@ -36,9 +36,9 @@ interface TranslationResult {
 
 const MAX_TOKENS = 4000; // GPT-3.5-turbo context limit
 const BUFFER_TOKENS = 1000; // Increased buffer for safety
-const TARGET_CHUNK_SIZE = 1500; // Target size for each chunk
+const DEFAULT_CHUNK_SIZE = 2000; // Default target size for each chunk
 
-async function analyzeFile(filePath: string): Promise<FileAnalysis> {
+async function analyzeFile(filePath: string, targetChunkSize: number = DEFAULT_CHUNK_SIZE): Promise<FileAnalysis> {
   const content = await Deno.readTextFile(filePath);
   const jsonContent = JSON.parse(content);
   
@@ -46,7 +46,7 @@ async function analyzeFile(filePath: string): Promise<FileAnalysis> {
   const tokens = encode(jsonString);
   const totalTokens = tokens.length;
   
-  const exceededLimit = totalTokens > TARGET_CHUNK_SIZE;
+  const exceededLimit = totalTokens > targetChunkSize;
   const recommendedChunks = [];
   
   if (exceededLimit) {
@@ -62,7 +62,7 @@ async function analyzeFile(filePath: string): Promise<FileAnalysis> {
       const entryTokens = encode(JSON.stringify({ [key]: value })).length;
       
       // Create new chunk if current would exceed target size
-      if (currentChunk.tokens + entryTokens > TARGET_CHUNK_SIZE) {
+      if (currentChunk.tokens + entryTokens > targetChunkSize) {
         if (currentChunk.tokens > 0) {
           currentChunk.end = index - 1;
           recommendedChunks.push({ ...currentChunk });
@@ -231,8 +231,13 @@ const openai = new OpenAI({
   apiKey: Deno.env.get("OPENAI_API_KEY") || "",
 });
 
-export async function translateJSON(filePath: string, targetLocale: string, styleGuidePath?: string) {
-  const analysis = await analyzeFile(filePath);
+export async function translateJSON(
+  filePath: string, 
+  targetLocale: string, 
+  styleGuidePath?: string,
+  targetChunkSize: number = DEFAULT_CHUNK_SIZE
+) {
+  const analysis = await analyzeFile(filePath, targetChunkSize);
   const content = JSON.parse(await Deno.readTextFile(filePath));
   
   if (analysis.exceededLimit) {
@@ -302,22 +307,36 @@ export async function translateJSON(filePath: string, targetLocale: string, styl
   }
 }
 
-// Only run CLI if this is the main module
+// Update CLI parsing
 if (import.meta.main) {
   const args = parseArgs(Deno.args, {
-    string: ["file", "locale", "style-guide"],
+    string: ["file", "locale", "style-guide", "chunk-size"],
     alias: {
       f: "file",
       l: "locale",
       s: "style-guide",
+      c: "chunk-size",
     },
   });
   
-  // Validate arguments
   if (!args.file || !args.locale) {
-    console.error("Usage: deno run main.ts -f <json-file> -l <target-locale> [-s <style-guide-json>]");
+    console.error(`Usage: deno run main.ts -f <json-file> -l <target-locale> [-s <style-guide-json>] [-c <chunk-size>]
+Options:
+  -f, --file        Path to JSON file to translate
+  -l, --locale      Target locale (e.g., es, fr)
+  -s, --style-guide Path to style guide JSON file
+  -c, --chunk-size  Target chunk size in tokens (default: ${DEFAULT_CHUNK_SIZE})`);
     Deno.exit(1);
   }
 
-  await translateJSON(args.file, args.locale, args["style-guide"]);
+  const chunkSizeArg = args["chunk-size"];
+  const chunkSize = chunkSizeArg ?  parseInt(chunkSizeArg, 10) : DEFAULT_CHUNK_SIZE;
+  
+  // Validate chunk size
+  if (chunkSize >= MAX_TOKENS - BUFFER_TOKENS) {
+    console.error(`Chunk size (${chunkSize}) must be less than ${MAX_TOKENS - BUFFER_TOKENS} tokens`);
+    Deno.exit(1);
+  }
+
+  await translateJSON(args.file, args.locale, args["style-guide"], chunkSize);
 }
