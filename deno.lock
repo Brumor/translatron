@@ -3,7 +3,8 @@
   "specifiers": {
     "jsr:@openai/openai@4.75.0": "4.75.0",
     "jsr:@std/cli@*": "1.0.9",
-    "jsr:@std/cli@1.0.9": "1.0.9"
+    "jsr:@std/cli@1.0.9": "1.0.9",
+    "npm:gpt-tokenizer@2.8.1": "2.8.1"
   },
   "jsr": {
     "@openai/openai@4.75.0": {
@@ -11,6 +12,11 @@
     },
     "@std/cli@1.0.9": {
       "integrity": "557e5865af000efbf3f737dcfea5b8ab86453594f4a9cd8d08c9fa83d8e3f3bc"
+    }
+  },
+  "npm": {
+    "gpt-tokenizer@2.8.1": {
+      "integrity": "sha512-8+a9ojzqfgiF3TK4oivGYjlycD8g5igLt8NQw3ndOIgLVKSGJDhUDNAfYSbtyyuTkha3R/R9F8XrwC7/B5TKfQ=="
     }
   },
   "redirects": {
