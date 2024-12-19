@@ -4,6 +4,11 @@ import { OpenAI } from "https://deno.land/x/openai@v4.24.0/mod.ts";
 interface StyleGuide {
   general?: string;
   locales?: Record<string, string>;
+  projectContext?: {
+    description?: string;
+    domain?: string;
+    targetAudience?: string;
+  };
 }
 
 // Parse command line arguments
@@ -46,7 +51,15 @@ async function translateJSON(filePath: string, targetLocale: string) {
 
     // Create prompt with style guides
     let prompt = `Translate the following JSON content to ${targetLocale}.\n`;
-    prompt += `Maintain the JSON structure and keys, only translate the values.\n`;
+    prompt += `Maintain the JSON structure and keys, only translate the values.\n\n`;
+    
+    if (styleGuide.projectContext) {
+      const ctx = styleGuide.projectContext;
+      prompt += "Project Context:\n";
+      if (ctx.description) prompt += `Description: ${ctx.description}\n`;
+      if (ctx.domain) prompt += `Domain: ${ctx.domain}\n`;
+      if (ctx.targetAudience) prompt += `Target Audience: ${ctx.targetAudience}\n\n`;
+    }
     
     if (styleGuide.general) {
       prompt += `General style guide:\n${styleGuide.general}\n\n`;
@@ -57,6 +70,8 @@ async function translateJSON(filePath: string, targetLocale: string) {
     }
     
     prompt += `Content to translate:\n${JSON.stringify(jsonData, null, 2)}`;
+
+    console.log(prompt)
 
     // Call OpenAI API
     const completion = await openai.chat.completions.create({

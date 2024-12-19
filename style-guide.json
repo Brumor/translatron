@@ -1,16 +1,21 @@
 {
-  "general": "Use formal tone. Maintain gender-neutral language.",
+  "projectContext": {
+    "description": "E-commerce website for sustainable products",
+    "domain": "Retail/Sustainability",
+    "targetAudience": "Environmentally conscious consumers, age 25-45"
+  },
+  "general": "Use eco-friendly terminology. Maintain formal but approachable tone.",
   "locales": {
-    "es": "Use 'usted' form for formal address. Follow RAE guidelines.",
-    "fr": "Use 'vous' form. Follow Académie française guidelines.",
-    "sv": "Use 'du' form for informal address. Follow Svenska Akademiens ordlista guidelines.",
-    "de": "Use 'Sie' form for formal address. Follow Duden guidelines.",
-    "it": "Use 'Lei' form for formal address. Follow Accademia della Crusca guidelines.",
-    "ja": "Use polite form (です/ます). Follow NHK guidelines.",
-    "zh": "Use formal address. Follow Modern Chinese Dictionary guidelines.",
-    "pt": "Use 'você' form for informal address. Follow Priberam guidelines.",
-    "ru": "Use formal address. Follow Russian Academy of Sciences guidelines.",
-    "ko": "Use polite form (습니다/요). Follow National Institute of Korean Language guidelines.",
-    "ar": "Use formal address. Follow Academy of the Arabic Language guidelines."
+    "es": "Use 'tú' form to maintain friendly approach. Use local sustainability terms. Maintain formal but approachable tone.",
+    "fr": "Use 'tu' form. Adapt sustainability terms for French market. Maintain formal but approachable tone.",
+    "sv": "Use 'du' form for informal address. Follow Svenska Akademiens ordlista guidelines. Maintain formal but approachable tone.",
+    "de": "Use 'Sie' form for formal address. Follow Duden guidelines. Maintain formal but approachable tone.",
+    "it": "Use 'Lei' form for formal address. Follow Accademia della Crusca guidelines. Maintain formal but approachable tone.",
+    "ja": "Use polite form (です/ます). Follow NHK guidelines. Maintain formal but approachable tone.",
+    "zh": "Use formal address. Follow Modern Chinese Dictionary guidelines. Maintain formal but approachable tone.",
+    "pt": "Use 'você' form for informal address. Follow Priberam guidelines. Maintain formal but approachable tone.",
+    "ru": "Use formal address. Follow Russian Academy of Sciences guidelines. Maintain formal but approachable tone.",
+    "ko": "Use polite form (습니다/요). Follow National Institute of Korean Language guidelines. Maintain formal but approachable tone.",
+    "ar": "Use formal address. Follow Academy of the Arabic Language guidelines. Maintain formal but approachable tone."
   }
 }
