@@ -71,8 +71,6 @@ async function translateJSON(filePath: string, targetLocale: string) {
     
     prompt += `Content to translate:\n${JSON.stringify(jsonData, null, 2)}`;
 
-    console.log(prompt)
-
     // Call OpenAI API
     const completion = await openai.chat.completions.create({
       messages: [{ role: "user", content: prompt }],
