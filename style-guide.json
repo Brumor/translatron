@@ -1,0 +1,16 @@
+{
+  "general": "Use formal tone. Maintain gender-neutral language.",
+  "locales": {
+    "es": "Use 'usted' form for formal address. Follow RAE guidelines.",
+    "fr": "Use 'vous' form. Follow Académie française guidelines.",
+    "sv": "Use 'du' form for informal address. Follow Svenska Akademiens ordlista guidelines.",
+    "de": "Use 'Sie' form for formal address. Follow Duden guidelines.",
+    "it": "Use 'Lei' form for formal address. Follow Accademia della Crusca guidelines.",
+    "ja": "Use polite form (です/ます). Follow NHK guidelines.",
+    "zh": "Use formal address. Follow Modern Chinese Dictionary guidelines.",
+    "pt": "Use 'você' form for informal address. Follow Priberam guidelines.",
+    "ru": "Use formal address. Follow Russian Academy of Sciences guidelines.",
+    "ko": "Use polite form (습니다/요). Follow National Institute of Korean Language guidelines.",
+    "ar": "Use formal address. Follow Academy of the Arabic Language guidelines."
+  }
+}

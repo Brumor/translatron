@@ -1,19 +1,36 @@
 import { parseArgs } from "jsr:@std/cli/parse-args";
 import { OpenAI } from "https://deno.land/x/openai@v4.24.0/mod.ts";
 
+interface StyleGuide {
+  general?: string;
+  locales?: Record<string, string>;
+}
+
 // Parse command line arguments
 const args = parseArgs(Deno.args, {
-  string: ["file", "locale"],
+  string: ["file", "locale", "style-guide"],
   alias: {
     f: "file",
     l: "locale",
+    s: "style-guide",
   },
 });
 
 // Validate arguments
 if (!args.file || !args.locale) {
-  console.error("Usage: deno run main.ts -f <json-file> -l <target-locale>");
+  console.error("Usage: deno run main.ts -f <json-file> -l <target-locale> [-s <style-guide-json>]");
   Deno.exit(1);
+}
+
+let styleGuide: StyleGuide = {};
+if (args["style-guide"]) {
+  try {
+    const styleGuideContent = await Deno.readTextFile(args["style-guide"]);
+    styleGuide = JSON.parse(styleGuideContent);
+  } catch (error) {
+    console.error("Error reading style guide:", error);
+    Deno.exit(1);
+  }
 }
 
 // Initialize OpenAI client
@@ -27,10 +44,19 @@ async function translateJSON(filePath: string, targetLocale: string) {
     const jsonContent = await Deno.readTextFile(filePath);
     const jsonData = JSON.parse(jsonContent);
 
-    // Create prompt for OpenAI
-    const prompt = `Translate the following JSON content to ${targetLocale}. 
-    Maintain the JSON structure and keys, only translate the values: 
-    ${JSON.stringify(jsonData, null, 2)}`;
+    // Create prompt with style guides
+    let prompt = `Translate the following JSON content to ${targetLocale}.\n`;
+    prompt += `Maintain the JSON structure and keys, only translate the values.\n`;
+    
+    if (styleGuide.general) {
+      prompt += `General style guide:\n${styleGuide.general}\n\n`;
+    }
+    
+    if (styleGuide.locales?.[targetLocale]) {
+      prompt += `Specific style guide for ${targetLocale}:\n${styleGuide.locales[targetLocale]}\n\n`;
+    }
+    
+    prompt += `Content to translate:\n${JSON.stringify(jsonData, null, 2)}`;
 
     // Call OpenAI API
     const completion = await openai.chat.completions.create({
