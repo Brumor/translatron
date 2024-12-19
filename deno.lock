@@ -1,9 +1,14 @@
 {
   "version": "4",
   "specifiers": {
-    "jsr:@std/cli@*": "1.0.9"
+    "jsr:@openai/openai@4.75.0": "4.75.0",
+    "jsr:@std/cli@*": "1.0.9",
+    "jsr:@std/cli@1.0.9": "1.0.9"
   },
   "jsr": {
+    "@openai/openai@4.75.0": {
+      "integrity": "acf16b1749d71117838dc3382dd3065c58eb6dca4706138b0af34742ac67cdc9"
+    },
     "@std/cli@1.0.9": {
       "integrity": "557e5865af000efbf3f737dcfea5b8ab86453594f4a9cd8d08c9fa83d8e3f3bc"
     }
@@ -61,10 +66,5 @@
     "https://deno.land/x/openai@v4.24.0/streaming.ts": "f360cf909b07562330ca75470ae26eecdc35f176af424b0f74ab673a5b242782",
     "https://deno.land/x/openai@v4.24.0/uploads.ts": "96dbd9e7e7b5a9bc3ff38e81f6c1372c2cdce28b38c704cd61c7daeb5494b6f9",
     "https://deno.land/x/openai@v4.24.0/version.ts": "4dcd23aa866d3457edbef4309dfb9d3fd36f8723eee8dac587a3b0ab54874d10"
-  },
-  "workspace": {
-    "dependencies": [
-      "jsr:@std/assert@1"
-    ]
   }
 }

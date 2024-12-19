@@ -1,5 +1,5 @@
-import { parseArgs } from "jsr:@std/cli/parse-args";
-import { OpenAI } from "https://deno.land/x/openai@v4.24.0/mod.ts";
+import { parseArgs } from "jsr:@std/cli@1.0.9/parse-args";
+import { OpenAI } from "jsr:@openai/openai@4.75.0";
 
 interface StyleGuide {
   general?: string;
@@ -11,39 +11,18 @@ interface StyleGuide {
   };
 }
 
-// Parse command line arguments
-const args = parseArgs(Deno.args, {
-  string: ["file", "locale", "style-guide"],
-  alias: {
-    f: "file",
-    l: "locale",
-    s: "style-guide",
-  },
-});
-
-// Validate arguments
-if (!args.file || !args.locale) {
-  console.error("Usage: deno run main.ts -f <json-file> -l <target-locale> [-s <style-guide-json>]");
-  Deno.exit(1);
-}
-
-let styleGuide: StyleGuide = {};
-if (args["style-guide"]) {
-  try {
-    const styleGuideContent = await Deno.readTextFile(args["style-guide"]);
-    styleGuide = JSON.parse(styleGuideContent);
-  } catch (error) {
-    console.error("Error reading style guide:", error);
-    Deno.exit(1);
-  }
-}
-
 // Initialize OpenAI client
 const openai = new OpenAI({
   apiKey: Deno.env.get("OPENAI_API_KEY") || "",
 });
 
-async function translateJSON(filePath: string, targetLocale: string) {
+export async function translateJSON(filePath: string, targetLocale: string, styleGuidePath?: string) {
+  let styleGuide: StyleGuide = {};
+  if (styleGuidePath) {
+    const styleGuideContent = await Deno.readTextFile(styleGuidePath);
+    styleGuide = JSON.parse(styleGuideContent);
+  }
+
   try {
     // Read and parse JSON file
     const jsonContent = await Deno.readTextFile(filePath);
@@ -97,5 +76,22 @@ async function translateJSON(filePath: string, targetLocale: string) {
   }
 }
 
-// Execute translation
-await translateJSON(args.file, args.locale);
+// Only run CLI if this is the main module
+if (import.meta.main) {
+  const args = parseArgs(Deno.args, {
+    string: ["file", "locale", "style-guide"],
+    alias: {
+      f: "file",
+      l: "locale",
+      s: "style-guide",
+    },
+  });
+  
+  // Validate arguments
+  if (!args.file || !args.locale) {
+    console.error("Usage: deno run main.ts -f <json-file> -l <target-locale> [-s <style-guide-json>]");
+    Deno.exit(1);
+  }
+
+  await translateJSON(args.file, args.locale, args["style-guide"]);
+}

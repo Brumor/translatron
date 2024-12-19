@@ -1,0 +1,1 @@
+export { translateJSON } from "./main.ts";
