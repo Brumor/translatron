@@ -35,7 +35,7 @@ interface TranslationResult {
 }
 
 const MAX_TOKENS = 4000; // GPT-3.5-turbo context limit
-const BUFFER_TOKENS = 1000; // Increased buffer for safety
+const BUFFER_TOKENS = 500; // Increased buffer for safety
 const TARGET_CHUNK_SIZE = 2000; // Target size for each chunk
 
 async function analyzeFile(filePath: string): Promise<FileAnalysis> {
