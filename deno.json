@@ -2,7 +2,7 @@
   "name": "@brumor/translatron",
   "version": "0.1.1",
   "license": "MIT",
-    "exports": {
+  "exports": {
     ".": "./mod.ts",
     "./cli": "./main.ts"
   },

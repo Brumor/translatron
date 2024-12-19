@@ -5,7 +5,7 @@ A command-line tool to translate JSON files using OpenAI.
 ## Installation
 
 ```bash
-deno install -A -n translatron https://jsr.io/@yourusername/translatron/main.ts
+deno install --global -f -A -n translatron jsr:@brumor/translatro/cli
 ```
 
 ## Usage
