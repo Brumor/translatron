@@ -6,7 +6,8 @@ import {
   type FileAnalysis, 
   MAX_TOKENS, 
   BUFFER_TOKENS, 
-  DEFAULT_CHUNK_SIZE 
+  DEFAULT_CHUNK_SIZE, 
+  subdivideChunk
 } from "./src/analyzer.ts";
 
 interface StyleGuide {
@@ -103,7 +104,7 @@ function validateAndRepairJSON(jsonString: string): Record<string, unknown> {
 async function translateChunk(chunk: Chunk, targetLocale: string, styleGuide?: StyleGuide): Promise<TranslationResult> {
   const prompt = constructPrompt(chunk.content, targetLocale, styleGuide);
   
-  const maxRetries = 3;
+  const maxRetries = 1;
   let attempts = 0;
   let lastError: Error | null = null;
 
@@ -139,6 +140,49 @@ async function translateChunk(chunk: Chunk, targetLocale: string, styleGuide?: S
   }
 
   throw new Error(`Failed to translate chunk after ${maxRetries} attempts: ${lastError?.message}`);
+}
+
+async function translateChunkWithFallback(
+  chunk: Chunk, 
+  targetLocale: string, 
+  styleGuide?: StyleGuide,
+  depth: number = 0
+): Promise<TranslationResult[]> {
+  try {
+    const result = await translateChunk(chunk, targetLocale, styleGuide);
+    return [result];
+  } catch (error) {
+    if (depth >= 3) { // Maximum recursion depth
+      throw error;
+    }
+
+    console.log(`Chunk translation failed, subdividing...`);
+    
+    // Analyze chunk content with smaller size
+    const subAnalysis = subdivideChunk(chunk.content, chunk.tokens);
+    
+    if (!subAnalysis.exceededLimit) {
+      // If chunk is too small to divide further, rethrow
+      throw error;
+    }
+
+    // Create smaller chunks
+    const subChunks = createChunksFromAnalysis(chunk.content, subAnalysis.recommendedChunks);
+    
+    // Process each sub-chunk
+    const results: TranslationResult[] = [];
+    for (const subChunk of subChunks) {
+      const subResults = await translateChunkWithFallback(
+        subChunk,
+        targetLocale,
+        styleGuide,
+        depth + 1
+      );
+      results.push(...subResults);
+    }
+    
+    return results;
+  }
 }
 
 function reassembleTranslations(results: TranslationResult[]): Record<string, unknown> {
@@ -210,8 +254,13 @@ export async function translateJSON(
     
     for (const [index, chunk] of chunks.entries()) {
       console.log(`Processing chunk ${index + 1}/${chunks.length}...`);
-      const result = await translateChunk(chunk, targetLocale, styleGuide);
-      results.push(result);
+      try {
+        const chunkResults = await translateChunkWithFallback(chunk, targetLocale, styleGuide);
+        results.push(...chunkResults);
+      } catch (error) {
+        console.error(`Failed to translate chunk after all retries:`, error);
+        throw error;
+      }
     }
     
     translatedContent = reassembleTranslations(results);

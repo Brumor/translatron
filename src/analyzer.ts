@@ -56,3 +56,13 @@ export function analyzeContent(
     recommendedChunks,
   };
 }
+
+// Add function to divide chunk into smaller pieces
+export function subdivideChunk(
+  content: Record<string, unknown>,
+  currentChunkSize: number
+): FileAnalysis {
+  // Reduce chunk size by half, but not below 500 tokens
+  const newChunkSize = Math.max(500, Math.floor(currentChunkSize / 2));
+  return analyzeContent(content, newChunkSize);
+}
