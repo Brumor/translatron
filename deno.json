@@ -1,6 +1,6 @@
 {
   "name": "@brumor/translatron",
-  "version": "0.2.4",
+  "version": "0.3.0",
   "license": "MIT",
   "exports": {
     ".": "./mod.ts",
@@ -10,6 +10,6 @@
     "start": "deno run --allow-read --allow-write --allow-env --allow-net main.ts"
   },
   "publish": {
-    "include": ["README.md", "LICENSE", "mod.ts", "main.ts"]
+    "include": ["README.md", "LICENSE", "mod.ts", "main.ts","src/**/*.ts"]
   }
 }
