@@ -1,6 +1,7 @@
 import { parseArgs } from "jsr:@std/cli@1.0.9/parse-args";
 import { OpenAI } from "jsr:@openai/openai@4.75.0";
 import { encode } from "npm:gpt-tokenizer@2.8.1";
+import { findMissingTranslations, mergeTranslations } from "./src/utils.ts";
 
 interface StyleGuide {
   general?: string;
@@ -237,13 +238,35 @@ export async function translateJSON(
   styleGuidePath?: string,
   targetChunkSize: number = DEFAULT_CHUNK_SIZE
 ) {
-  const analysis = await analyzeFile(filePath, targetChunkSize);
   const content = JSON.parse(await Deno.readTextFile(filePath));
+  const outputPath = filePath.replace(/[^\\/]+(?=\.[^\\/]+$)/, targetLocale);
+  
+  // Check for existing translations
+  let existingTranslations: Record<string, unknown> = {};
+  try {
+    const existingContent = await Deno.readTextFile(outputPath);
+    existingTranslations = JSON.parse(existingContent);
+  } catch {
+    // File doesn't exist or is invalid, continue with empty translations
+  }
+
+  // Find missing translations
+  const missingTranslations = findMissingTranslations(content, existingTranslations);
+  
+  if (Object.keys(missingTranslations).length === 0) {
+    console.log('All keys are already translated');
+    return;
+  }
+
+  // Analyze missing translations
+  const analysis = await analyzeFile(JSON.stringify(missingTranslations), targetChunkSize);
+  
+  let translatedContent: Record<string, unknown>;
   
   if (analysis.exceededLimit) {
-    console.log(`Processing large file in ${analysis.chunkCount} chunks...`);
+    console.log(`Processing ${Object.keys(missingTranslations).length} missing keys in ${analysis.chunkCount} chunks...`);
     
-    const chunks = createChunksFromAnalysis(content, analysis.recommendedChunks);
+    const chunks = createChunksFromAnalysis(missingTranslations, analysis.recommendedChunks);
     const results: TranslationResult[] = [];
     
     let styleGuide: StyleGuide = {};
@@ -254,57 +277,32 @@ export async function translateJSON(
     
     for (const [index, chunk] of chunks.entries()) {
       console.log(`Processing chunk ${index + 1}/${chunks.length}...`);
-      console.log(`Chunk size: ${chunk.tokens} tokens`);
       const result = await translateChunk(chunk, targetLocale, styleGuide);
       results.push(result);
     }
     
-    const finalContent = reassembleTranslations(results);
-    const outputPath = filePath.replace(".json", `_${targetLocale}.json`);
-    await Deno.writeTextFile(outputPath, JSON.stringify(finalContent, null, 2));
-    
-    console.log(`Translation completed: ${outputPath}`);
-    return;
-  }
-
-  try {
-    // Read and parse JSON file
-    const jsonContent = await Deno.readTextFile(filePath);
-    const jsonData = JSON.parse(jsonContent);
-
-    // Create prompt with style guides
+    translatedContent = reassembleTranslations(results);
+  } else {
     let styleGuide: StyleGuide = {};
     if (styleGuidePath) {
       const styleGuideContent = await Deno.readTextFile(styleGuidePath);
       styleGuide = JSON.parse(styleGuideContent);
     }
 
-    const prompt = constructPrompt(jsonData, targetLocale, styleGuide);
-
-    // Call OpenAI API
-    const completion = await openai.chat.completions.create({
-      messages: [{ role: "user", content: prompt }],
-      model: "gpt-3.5-turbo",
-    });
-
-    // Parse the response
-    const translatedContent = completion.choices[0].message.content;
-    const parsedTranslation = JSON.parse(translatedContent || "{}");
-
-    // Generate output filename
-    const outputPath = filePath.replace(".json", `_${targetLocale}.json`);
-
-    // Write translated content
-    await Deno.writeTextFile(
-      outputPath,
-      JSON.stringify(parsedTranslation, null, 2)
+    const result = await translateChunk(
+      { content: missingTranslations, path: [], tokens: analysis.totalTokens },
+      targetLocale,
+      styleGuide
     );
-    console.log(`Translation saved to: ${outputPath}`);
-
-  } catch (error) {
-    console.error("Error:", error);
-    Deno.exit(1);
+    translatedContent = result.translatedContent;
   }
+
+  // Merge with existing translations
+  const finalContent = mergeTranslations(existingTranslations, translatedContent);
+  
+  // Write final content
+  await Deno.writeTextFile(outputPath, JSON.stringify(finalContent, null, 2));
+  console.log(`Translation updated: ${outputPath}`);
 }
 
 // Update CLI parsing
