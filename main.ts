@@ -1,7 +1,13 @@
 import { parseArgs } from "jsr:@std/cli@1.0.9/parse-args";
 import { OpenAI } from "jsr:@openai/openai@4.75.0";
-import { encode } from "npm:gpt-tokenizer@2.8.1";
 import { findMissingTranslations, mergeTranslations } from "./src/utils.ts";
+import { 
+  analyzeContent, 
+  type FileAnalysis, 
+  MAX_TOKENS, 
+  BUFFER_TOKENS, 
+  DEFAULT_CHUNK_SIZE 
+} from "./src/analyzer.ts";
 
 interface StyleGuide {
   general?: string;
@@ -13,17 +19,6 @@ interface StyleGuide {
   };
 }
 
-interface FileAnalysis {
-  totalTokens: number;
-  exceededLimit: boolean;
-  chunkCount: number;
-  recommendedChunks: Array<{
-    start: number;
-    end: number;
-    tokens: number;
-  }>;
-}
-
 interface Chunk {
   content: Record<string, unknown>;
   path: string[];
@@ -33,68 +28,6 @@ interface Chunk {
 interface TranslationResult {
   originalPath: string[];
   translatedContent: Record<string, unknown>;
-}
-
-const MAX_TOKENS = 4000; // GPT-3.5-turbo context limit
-const BUFFER_TOKENS = 1000; // Increased buffer for safety
-const DEFAULT_CHUNK_SIZE = 2000; // Default target size for each chunk
-
-async function analyzeFile(filePath: string, targetChunkSize: number = DEFAULT_CHUNK_SIZE): Promise<FileAnalysis> {
-  const content = await Deno.readTextFile(filePath);
-  const jsonContent = JSON.parse(content);
-  
-  const jsonString = JSON.stringify(jsonContent);
-  const tokens = encode(jsonString);
-  const totalTokens = tokens.length;
-  
-  const exceededLimit = totalTokens > targetChunkSize;
-  const recommendedChunks = [];
-  
-  if (exceededLimit) {
-    const jsonEntries = Object.entries(jsonContent);
-    
-    let currentChunk = {
-      start: 0,
-      end: 0,
-      tokens: 0,
-    };
-    
-    for (const [index, [key, value]] of jsonEntries.entries()) {
-      const entryTokens = encode(JSON.stringify({ [key]: value })).length;
-      
-      // Create new chunk if current would exceed target size
-      if (currentChunk.tokens + entryTokens > targetChunkSize) {
-        if (currentChunk.tokens > 0) {
-          currentChunk.end = index - 1;
-          recommendedChunks.push({ ...currentChunk });
-        }
-        currentChunk = {
-          start: index,
-          end: index,
-          tokens: entryTokens,
-        };
-      } else {
-        currentChunk.tokens += entryTokens;
-        currentChunk.end = index;
-      }
-      
-      // Validate chunk size
-      if (currentChunk.tokens > MAX_TOKENS - BUFFER_TOKENS) {
-        throw new Error(`Single entry too large: ${entryTokens} tokens`);
-      }
-    }
-    
-    if (currentChunk.tokens > 0) {
-      recommendedChunks.push(currentChunk);
-    }
-  }
-  
-  return {
-    totalTokens,
-    exceededLimit,
-    chunkCount: recommendedChunks.length || 1,
-    recommendedChunks,
-  };
 }
 
 // Remove current createChunks function and replace with:
@@ -259,7 +192,7 @@ export async function translateJSON(
   }
 
   // Analyze missing translations
-  const analysis = await analyzeFile(JSON.stringify(missingTranslations), targetChunkSize);
+  const analysis = await analyzeContent(missingTranslations, targetChunkSize);
   
   let translatedContent: Record<string, unknown>;
   
