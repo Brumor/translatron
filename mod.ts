@@ -1,1 +1,1 @@
-export { translateJSON } from "./main.ts";
+export { translateJsonFile, translateJsonString } from "./main.ts";

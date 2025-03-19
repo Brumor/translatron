@@ -209,7 +209,7 @@ const openai = new OpenAI({
   apiKey: Deno.env.get("OPENAI_API_KEY") || "",
 });
 
-export async function translateJSON(
+export async function translateJsonFile(
   filePath: string, 
   targetLocale: string, 
   styleGuidePath?: string,
@@ -227,14 +227,14 @@ export async function translateJSON(
     // File doesn't exist or is invalid, continue with empty translations
   }
 
-  const finalContent = await translate(content, targetLocale, existingTranslations, styleGuidePath ? JSON.parse(await Deno.readTextFile(styleGuidePath)) : undefined, targetChunkSize);
+  const finalContent = await translateJsonString(content, targetLocale, existingTranslations, styleGuidePath ? JSON.parse(await Deno.readTextFile(styleGuidePath)) : undefined, targetChunkSize);
   
   // Write final content
   await Deno.writeTextFile(outputPath, JSON.stringify(finalContent, null, 2));
   console.log(`Translation updated: ${outputPath}`);
 }
 
-export async function translate(
+export async function translateJsonString(
   content: Record<string, unknown>,
   targetLocale: string,
   existingTranslations: Record<string, unknown> = {},
@@ -316,5 +316,5 @@ Options:
     Deno.exit(1);
   }
 
-  await translateJSON(args.file, args.locale, args["style-guide"], chunkSize);
+  await translateJsonFile(args.file, args.locale, args["style-guide"], chunkSize);
 }
