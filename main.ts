@@ -227,12 +227,26 @@ export async function translateJSON(
     // File doesn't exist or is invalid, continue with empty translations
   }
 
+  const finalContent = await translate(content, targetLocale, existingTranslations, styleGuidePath ? JSON.parse(await Deno.readTextFile(styleGuidePath)) : undefined, targetChunkSize);
+  
+  // Write final content
+  await Deno.writeTextFile(outputPath, JSON.stringify(finalContent, null, 2));
+  console.log(`Translation updated: ${outputPath}`);
+}
+
+export async function translate(
+  content: Record<string, unknown>,
+  targetLocale: string,
+  existingTranslations: Record<string, unknown> = {},
+  styleGuide?: StyleGuide,
+  targetChunkSize: number = DEFAULT_CHUNK_SIZE
+): Promise<Record<string, unknown>> {
   // Find missing translations
   const missingTranslations = findMissingTranslations(content, existingTranslations);
   
   if (Object.keys(missingTranslations).length === 0) {
     console.log('All keys are already translated');
-    return;
+    return existingTranslations;
   }
 
   // Analyze missing translations
@@ -245,12 +259,6 @@ export async function translateJSON(
     
     const chunks = createChunksFromAnalysis(missingTranslations, analysis.recommendedChunks);
     const results: TranslationResult[] = [];
-    
-    let styleGuide: StyleGuide = {};
-    if (styleGuidePath) {
-      const styleGuideContent = await Deno.readTextFile(styleGuidePath);
-      styleGuide = JSON.parse(styleGuideContent);
-    }
     
     for (const [index, chunk] of chunks.entries()) {
       console.log(`Processing chunk ${index + 1}/${chunks.length}...`);
@@ -265,12 +273,6 @@ export async function translateJSON(
     
     translatedContent = reassembleTranslations(results);
   } else {
-    let styleGuide: StyleGuide = {};
-    if (styleGuidePath) {
-      const styleGuideContent = await Deno.readTextFile(styleGuidePath);
-      styleGuide = JSON.parse(styleGuideContent);
-    }
-
     const result = await translateChunk(
       { content: missingTranslations, path: [], tokens: analysis.totalTokens },
       targetLocale,
@@ -280,11 +282,7 @@ export async function translateJSON(
   }
 
   // Merge with existing translations
-  const finalContent = mergeTranslations(existingTranslations, translatedContent);
-  
-  // Write final content
-  await Deno.writeTextFile(outputPath, JSON.stringify(finalContent, null, 2));
-  console.log(`Translation updated: ${outputPath}`);
+  return mergeTranslations(existingTranslations, translatedContent);
 }
 
 // Update CLI parsing
