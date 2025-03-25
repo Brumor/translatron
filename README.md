@@ -50,9 +50,19 @@ translatron -f large.json -l de -c 1000
 ## API Usage
 
 ```ts
-import { translateJSON } from "jsr:@yourusername/translatron";
+import { Translatron } from "jsr:@brumor/translatron";
 
-await translateJSON("input.json", "es", "style-guide.json", 1000);
+// With default console.log logger
+const translator = new Translatron("your-api-key");
+
+// With custom logger
+const customLogger = (message: string) => {
+  // Add timestamp
+  console.log(`[${new Date().toISOString()}] ${message}`);
+};
+const translator = new Translatron("your-api-key", customLogger);
+
+await translator.translateJsonFile("input.json", "es", "style-guide.json");
 ```
 
 ## Example Files

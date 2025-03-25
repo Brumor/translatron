@@ -31,13 +31,20 @@ interface TranslationResult {
   translatedContent: Record<string, unknown>;
 }
 
+export type LoggerFn = (message: string) => void;
+
 export class Translatron {
   private openai: OpenAI;
+  private logger: LoggerFn;
 
-  constructor(apiKey: string) {
+  constructor(
+    apiKey: string,
+    logger: LoggerFn = console.log,
+  ) {
     this.openai = new OpenAI({
       apiKey: apiKey || Deno.env.get("OPENAI_API_KEY") || "",
     });
+    this.logger = logger;
   }
 
   private createChunksFromAnalysis(
@@ -161,7 +168,7 @@ export class Translatron {
       } catch (error) {
         lastError = error as Error;
         attempts++;
-        console.log(
+        this.logger(
           `Chunk translation attempt ${attempts} failed: ${
             (error as Error).message
           }`,
@@ -189,7 +196,7 @@ export class Translatron {
         throw error;
       }
 
-      console.log(`Chunk translation failed, subdividing...`);
+      this.logger(`Chunk translation failed, subdividing...`);
 
       // Analyze chunk content with smaller size
       const subAnalysis = subdivideChunk(chunk.content, chunk.tokens);
@@ -270,7 +277,7 @@ export class Translatron {
     );
 
     await Deno.writeTextFile(outputPath, JSON.stringify(finalContent, null, 2));
-    console.log(`Translation updated: ${outputPath}`);
+    this.logger(`Translation updated: ${outputPath}`);
   }
 
   async translateJsonString(
@@ -287,7 +294,7 @@ export class Translatron {
     );
 
     if (Object.keys(missingTranslations).length === 0) {
-      console.log("All keys are already translated");
+      this.logger("All keys are already translated");
       return existingTranslations;
     }
 
@@ -297,7 +304,7 @@ export class Translatron {
     let translatedContent: Record<string, unknown>;
 
     if (analysis.exceededLimit) {
-      console.log(
+      this.logger(
         `Processing ${
           Object.keys(missingTranslations).length
         } missing keys in ${analysis.chunkCount} chunks...`,
@@ -310,7 +317,7 @@ export class Translatron {
       const results: TranslationResult[] = [];
 
       for (const [index, chunk] of chunks.entries()) {
-        console.log(`Processing chunk ${index + 1}/${chunks.length}...`);
+        this.logger(`Processing chunk ${index + 1}/${chunks.length}...`);
         try {
           const chunkResults = await this.translateChunkWithFallback(
             chunk,
@@ -390,7 +397,7 @@ Options:
     Deno.exit(1);
   }
 
-  const translator = new Translatron(openAiKey);
+  const translator = new Translatron(openAiKey, console.log);
   await translator.translateJsonFile(
     args.file,
     args.locale,
