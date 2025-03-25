@@ -7,7 +7,7 @@
     "./cli": "./main.ts"
   },
   "tasks": {
-    "start": "deno run --allow-read --allow-write --allow-env --allow-net main.ts -f test_input.json -l es_MX -s test_style_guide.json"
+    "start": "deno run --allow-read --allow-write --allow-env --allow-net main.ts -f test_input.json -l es -s test_style_guide.json"
   },
   "publish": {
     "include": ["README.md", "LICENSE", "mod.ts", "main.ts","src/**/*.ts"]
