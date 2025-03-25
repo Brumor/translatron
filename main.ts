@@ -1,5 +1,5 @@
-import { parseArgs } from "jsr:@std/cli@1.0.9/parse-args";
-import { OpenAI } from "jsr:@openai/openai@4.75.0";
+import { parseArgs } from "@std/cli/parse-args";
+import { OpenAI } from "@openai/openai";
 import { findMissingTranslations, mergeTranslations } from "./src/utils.ts";
 import {
   analyzeContent,

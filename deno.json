@@ -7,9 +7,14 @@
     "./cli": "./main.ts"
   },
   "tasks": {
-    "start": "deno run --allow-read --allow-write --allow-env --allow-net main.ts"
+    "start": "deno run --allow-read --allow-write --allow-env --allow-net main.ts -f test_input.json -l es_MX -s test_style_guide.json"
   },
   "publish": {
     "include": ["README.md", "LICENSE", "mod.ts", "main.ts","src/**/*.ts"]
+  },
+  "imports": {
+    "@openai/openai": "jsr:@openai/openai@^4.89.0",
+    "@std/cli": "jsr:@std/cli@^1.0.15",
+    "gpt-tokenizer": "npm:gpt-tokenizer@^2.9.0"
   }
 }

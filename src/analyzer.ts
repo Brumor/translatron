@@ -1,4 +1,4 @@
-import { encode } from "npm:gpt-tokenizer@2.8.1";
+import { encode } from "gpt-tokenizer";
 
 export interface FileAnalysis {
   totalTokens: number;
@@ -17,22 +17,22 @@ export const DEFAULT_CHUNK_SIZE = 2000;
 
 export function analyzeContent(
   content: Record<string, unknown>,
-  targetChunkSize: number = DEFAULT_CHUNK_SIZE
+  targetChunkSize: number = DEFAULT_CHUNK_SIZE,
 ): FileAnalysis {
   const jsonString = JSON.stringify(content);
   const tokens = encode(jsonString);
   const totalTokens = tokens.length;
-  
+
   const exceededLimit = totalTokens > targetChunkSize;
   const recommendedChunks = [];
-  
+
   if (exceededLimit) {
     const jsonEntries = Object.entries(content);
     let currentChunk = { start: 0, end: 0, tokens: 0 };
-    
+
     for (const [index, [key, value]] of jsonEntries.entries()) {
       const entryTokens = encode(JSON.stringify({ [key]: value })).length;
-      
+
       if (currentChunk.tokens + entryTokens > targetChunkSize) {
         if (currentChunk.tokens > 0) {
           recommendedChunks.push({ ...currentChunk });
@@ -43,12 +43,12 @@ export function analyzeContent(
         currentChunk.end = index;
       }
     }
-    
+
     if (currentChunk.tokens > 0) {
       recommendedChunks.push(currentChunk);
     }
   }
-  
+
   return {
     totalTokens,
     exceededLimit,
@@ -60,7 +60,7 @@ export function analyzeContent(
 // Add function to divide chunk into smaller pieces
 export function subdivideChunk(
   content: Record<string, unknown>,
-  currentChunkSize: number
+  currentChunkSize: number,
 ): FileAnalysis {
   // Reduce chunk size by half, but not below 500 tokens
   const newChunkSize = Math.max(500, Math.floor(currentChunkSize / 2));
