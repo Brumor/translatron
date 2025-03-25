@@ -74,5 +74,22 @@ await translateJSON("input.json", "es", "style-guide.json", 1000);
 }
 ```
 
+## Alternative API Usage
+
+```ts
+import { Translatron } from "jsr:@brumor/translatron";
+
+const translator = new Translatron("your-api-key");
+await translator.translateJsonFile("input.json", "es", "style-guide.json");
+
+// Or use string API
+const result = await translator.translateJsonString(
+  content,
+  "es",
+  existingTranslations,
+  styleGuide
+);
+```
+
 License
 MIT

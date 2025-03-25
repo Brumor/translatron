@@ -1,1 +1,2 @@
-export { translateJsonFile, translateJsonString } from "./main.ts";
+export { Translatron } from "./main.ts";
+export type { StyleGuide } from "./main.ts";
